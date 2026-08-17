@@ -1,0 +1,16 @@
+.DS_Store
+node_modules
+coverage
+dist
+*.log
+*.swp
+.eslintcache
+esm
+crate/target
+crate/build/
+esm_*/
+*.cpuprofile
+bench-results.json
+.claude/settings.local.json
+.claude/worktrees/
+crate/wasm-bindgen/
