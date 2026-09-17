@@ -23,11 +23,11 @@ target; `build-wasm.sh` installs a matching `wasm-bindgen-cli` itself:
 ## Two rules about the bundle
 
 **It must rebuild byte-for-byte.** `preversion` runs `pnpm build`, which starts
-with `build:wasm`, so a non-reproducible bundle means `npm version` quietly
-commits an artifact nobody reviewed part-way through a release. After
-`pnpm build:wasm`, `git status` must be clean. If it is not, your toolchain does
-not match the one CI pins — regenerate under that version and commit the result,
-don't paper over it.
+with `build:wasm`, so a non-reproducible bundle means `npm version` commits an
+artifact nobody reviewed part-way through a release. After `pnpm build:wasm`,
+`git status` must be clean. If it is not, your toolchain does not match the one
+CI pins — regenerate under that version and commit the result, don't paper over
+it.
 
 **Only the bundle belongs in `src/`.** wasm-bindgen's output and webpack's input
 go to `crate/wasm-bindgen/` and `crate/build/`, both gitignored. Anything under
@@ -40,10 +40,9 @@ this.
 
     $ npm version patch   # or minor / major
 
-`preversion` runs the same gate CI does, in CI's order, and `test:pack` last.
-That ordering matters: `postversion` pushes the tag, so anything that fails
-after this point fails with the tag already created, and the fix needs a new
-version number.
+`preversion` runs the same gate CI does, in CI's order, with `test:pack` last,
+because `postversion` pushes the tag: anything that fails after this point fails
+with the tag already created, and the fix needs a new version number.
 
 `version` regenerates CHANGELOG.md with git-cliff, and the tag push triggers
 publish plus a GitHub release whose notes are lifted from that changelog
