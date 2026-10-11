@@ -64,8 +64,8 @@ Many blocks, one call. `inputs` is the concatenated compressed bytes and
 `offsets`/`lengths` (both `Uint32Array`) locate each block within it.
 `maxBlockSize` is the largest size any single block inflates to.
 
-Unlike `inflateRaw`, each block here **is** expected to carry its 2-byte zlib
-header; the wasm skips it internally.
+Unlike `inflateRaw`, each block here **is** expected to start with its 2-byte
+zlib header; the wasm skips it internally.
 
 Returns `{ data, offsets }`, where `data` is every block's bytes concatenated
 and `offsets` has `blocks + 1` marks, so block `i` is
@@ -73,11 +73,11 @@ and `offsets` has `blocks + 1` marks, so block `i` is
 
 ## Integrity
 
-Raw deflate carries **no checksum** — zlib's adler32 is stored in the 4-byte
-trailer these entry points skip past. A corruption that still forms a legal bit
-stream decodes to the wrong bytes without an error. Callers needing integrity
-should take it from their container: bgzf's per-block CRC, or a mismatch against
-the uncompressed size an index recorded.
+Raw deflate has **no checksum**: zlib's adler32 is stored in the 4-byte trailer
+these entry points skip past. A corruption that still forms a legal bit stream
+decodes to the wrong bytes without an error. Callers needing integrity should
+take it from their container: bgzf's per-block CRC, or a mismatch against the
+uncompressed size an index recorded.
 
 Corrupt input that is _not_ a legal stream rejects normally, and the wasm
 instance stays usable for later calls.
