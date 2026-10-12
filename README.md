@@ -108,12 +108,13 @@ arrives.
 ## Building
 
 The tracked `src/wasm/inflate-wasm-inlined.js` is generated, and rebuilding it
-needs a Rust toolchain plus `wasm-bindgen-cli`:
+needs rustup plus `wasm-bindgen-cli`:
 
     $ pnpm build:wasm
 
-The bundle must rebuild byte-for-byte, because `preversion` runs `pnpm build`. A
-clean `git status` after `pnpm build:wasm` confirms it.
+Commit the bundle together with `crate/wasm-inputs.sha256`, which
+`pnpm check:wasm` compares against `crate/` to catch a stale bundle. See
+CONTRIBUTING.md.
 
 ## License
 

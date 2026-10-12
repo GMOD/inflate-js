@@ -15,19 +15,27 @@
     $ pnpm lint
     $ pnpm typecheck
 
-Rebuilding the wasm needs a Rust toolchain and the `wasm32-unknown-unknown`
-target; `build-wasm.sh` installs a matching `wasm-bindgen-cli` itself:
+Rebuilding the wasm needs rustup, which installs the Rust release and wasm
+target that `crate/rust-toolchain.toml` pins; `build-wasm.sh` installs a
+matching `wasm-bindgen-cli` itself:
 
     $ pnpm build:wasm
 
 ## Two rules about the bundle
 
-**It must rebuild byte-for-byte.** `preversion` runs `pnpm build`, which starts
-with `build:wasm`, so a non-reproducible bundle means `npm version` commits an
-artifact nobody reviewed part-way through a release. After `pnpm build:wasm`,
-`git status` must be clean. If it is not, your toolchain does not match the one
-CI pins — regenerate under that version and commit the result, don't paper over
-it.
+**It must be built from the current `crate/`.** `build:wasm` writes
+`crate/wasm-inputs.sha256`, a hash of every file in `crate/` plus a hash of the
+bundle. `pnpm check:wasm` runs first in CI and in `preversion`, and fails when
+either no longer matches. After changing anything in `crate/`, run
+`pnpm build:wasm` and commit the bundle with the stamp.
+
+- The check hashes the inputs because the output bytes depend on the machine.
+  libdeflate's C compiles with the system clang, and clang-20 and clang-21 emit
+  different wasm, so the bundle CI builds for npm can differ in bytes from the
+  committed one.
+- A rebuild on one machine is repeatable. The toolchain file pins rustc,
+  `Cargo.lock` pins wasm-bindgen, and `build-wasm.sh` remaps `~/.cargo` to
+  `/cargo` so the wasm embeds no home directory paths.
 
 **Only the bundle belongs in `src/`.** wasm-bindgen's output and webpack's input
 go to `crate/wasm-bindgen/` and `crate/build/`, both gitignored. Anything under
