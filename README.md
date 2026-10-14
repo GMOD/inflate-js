@@ -37,14 +37,14 @@ for (let i = 0; i < offsets.length - 1; i++) {
 }
 ```
 
-The wasm module instantiates lazily on the first call and is shared from then
-on, so there is nothing to initialize and no teardown.
+The package instantiates the wasm module on the first call and reuses it for
+every later call, so a caller needs no init or teardown step.
 
 ## API
 
 ### `inflateRaw(input, outputSize): Promise<Uint8Array>`
 
-One **raw deflate** stream whose uncompressed size is already known.
+Inflates one **raw deflate** stream whose uncompressed size is already known.
 
 - libdeflate writes straight into an exactly-sized buffer, with no growth loop
   and no streaming state.
@@ -57,40 +57,41 @@ pass `input.subarray(2)`.
 
 ### `inflateRawUnknownSize(input): Promise<Uint8Array>`
 
-The same, when the size is not recorded. It doubles a guess until the output
-fits, which costs a re-inflate per doubling. Prefer `inflateRaw` where you can.
+Inflates one raw deflate stream whose size is not recorded. It doubles a guess
+until the output fits, which costs a re-inflate per doubling. Prefer
+`inflateRaw` where you can.
 
 ### `inflateRawBatch(inputs, offsets, lengths, maxBlockSize): Promise<BatchResult>`
 
-Many blocks, one call.
+Inflates many blocks in one call.
 
 - `inputs` is the concatenated compressed bytes.
 - `offsets` and `lengths` (both `Uint32Array`) locate each block within it.
 - `maxBlockSize` is the largest size any single block inflates to.
-- Unlike `inflateRaw`, each block is expected to start with its 2-byte zlib
-  header. The wasm skips it.
+- Unlike `inflateRaw`, it expects each block to start with a 2-byte zlib header,
+  which the wasm skips.
 - It returns `{ data, offsets }`. `data` is every block's bytes concatenated,
   and `offsets` has `blocks + 1` marks, so block `i` is
   `data.subarray(offsets[i], offsets[i + 1])`.
 
 ## Integrity
 
-Raw deflate has **no checksum**. zlib's adler32 sits in the 4-byte trailer that
-these functions skip.
+Raw deflate has **no checksum**. zlib stores its adler32 in the 4-byte trailer,
+which these functions skip.
 
 - Corruption that still forms a legal bit stream decodes to the wrong bytes with
   no error.
 - For integrity, check the container's own data: bgzf's per-block CRC, or the
   uncompressed size an index recorded.
-- Corrupt input that is _not_ a legal stream rejects normally, and the wasm
-  instance stays usable for later calls.
+- On corrupt input that is _not_ a legal stream, the promise rejects, and the
+  wasm instance stays usable for later calls.
 
 ## Why not `DecompressionStream`?
 
 For a single large buffer, `DecompressionStream` is fine. For many small blocks,
-its fixed per-call overhead dominates, and a caller pays it once per block.
-Measured in three GMOD parsers, the cost depends on how the container packs its
-blocks:
+its fixed per-call overhead dominates, and a caller pays it once per block. We
+measured the overhead in three GMOD parsers, and the slowdown depends on how the
+container packs its blocks:
 
 | container                                                                                                 | blocks                       | vs wasm |
 | --------------------------------------------------------------------------------------------------------- | ---------------------------- | ------: |
@@ -98,12 +99,12 @@ blocks:
 | [.hic](https://github.com/GMOD/hic/blob/main/docs/optimizations.md)                                       | fewer, larger blocks         |   ~2-7x |
 | [bgzf](https://github.com/GMOD/bgzf-filehandle/blob/main/docs/optimizations.md)                           | concatenated members, 1 call |     ~2x |
 
-`inflateRawBatch` pays that cost once for the whole group.
+`inflateRawBatch` pays the per-call cost once for the whole group.
 
 `DecompressionStream` is also only
 [baseline since May 2023](https://web.dev/blog/compressionstreams) (Safari 16.4,
-Firefox 113), so a JS fallback ships regardless and the bundle saving never
-arrives.
+Firefox 113), so a JS fallback ships regardless, and switching would not shrink
+the bundle.
 
 ## Building
 
