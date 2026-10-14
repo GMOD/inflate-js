@@ -48,7 +48,6 @@ Inflates one **raw deflate** stream whose uncompressed size is already known.
 
 - libdeflate writes straight into an exactly-sized buffer, with no growth loop
   and no streaming state.
-- Prefer it over `inflateRawUnknownSize` when the size is known.
 - Formats that record the uncompressed size in their index, such as bigwig,
   `.hic` and bgzf, can always use it.
 
@@ -108,14 +107,8 @@ the bundle.
 
 ## Building
 
-The tracked `src/wasm/inflate-wasm-inlined.js` is generated, and rebuilding it
-needs rustup plus `wasm-bindgen-cli`:
-
-    $ pnpm build:wasm
-
-Commit the bundle together with `crate/wasm-inputs.sha256`, which
-`pnpm check:wasm` compares against `crate/` to catch a stale bundle. See
-CONTRIBUTING.md.
+Git tracks the generated wasm bundle, so installing needs no Rust toolchain.
+[CONTRIBUTING.md](CONTRIBUTING.md) covers rebuilding it.
 
 ## License
 
