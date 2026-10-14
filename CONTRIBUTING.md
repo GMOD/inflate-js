@@ -48,7 +48,7 @@ contains the webpack input.
 
     $ npm version patch   # or minor / major
 
-`preversion` runs the same gate as CI, in CI's order, with `test:pack` last.
+`preversion` runs the same gate CI does, in CI's order, with `test:pack` last.
 `npm version` creates the tag after `preversion`, and `postversion` pushes it,
 so a check that fails later leaves the tag behind, and the fix needs a new
 version number.

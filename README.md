@@ -37,8 +37,8 @@ for (let i = 0; i < offsets.length - 1; i++) {
 }
 ```
 
-The package instantiates the wasm module on the first call and reuses it for
-every later call, so a caller needs no init or teardown step.
+The package instantiates the wasm module lazily on the first call and reuses it
+from then on, so there is nothing to initialize and no teardown.
 
 ## API
 
@@ -90,7 +90,7 @@ which these functions skip.
 
 For a single large buffer, `DecompressionStream` is fine. For many small blocks,
 its fixed per-call overhead dominates, and a caller pays it once per block. We
-measured the overhead in three GMOD parsers, and the slowdown depends on how the
+measured the overhead in three GMOD parsers, and the cost depends on how the
 container packs its blocks:
 
 | container                                                                                                 | blocks                       | vs wasm |
