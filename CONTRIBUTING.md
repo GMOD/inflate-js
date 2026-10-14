@@ -3,7 +3,7 @@
 ## Layout
 
 - `crate/` — the Rust source and the build pipeline that turns it into the
-  inlined bundle. It is not published.
+  inlined bundle, left out of the published package.
 - `src/wasm/inflate-wasm-inlined.js` — the generated bundle. **Tracked in git**,
   so installing this package needs no Rust toolchain.
 - `src/index.ts` — the public surface, a re-export of the bundle.
@@ -33,8 +33,8 @@ either no longer matches. After changing anything in `crate/`, run
   The build compiles libdeflate's C with the system clang, and clang-20 and
   clang-21 emit different wasm, so the bundle CI builds for npm can differ in
   bytes from the committed one.
-- A rebuild on one machine is repeatable. The toolchain file pins rustc,
-  `Cargo.lock` pins wasm-bindgen, and `build-wasm.sh` remaps `~/.cargo` to
+- A rebuild on one machine is repeatable, because the toolchain file pins rustc
+  and `Cargo.lock` pins wasm-bindgen. `build-wasm.sh` remaps `~/.cargo` to
   `/cargo` so the wasm embeds no home directory paths.
 
 **Only the bundle belongs in `src/`.** wasm-bindgen's output and webpack's input
